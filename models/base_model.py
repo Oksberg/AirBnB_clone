@@ -24,7 +24,6 @@ class BaseModel:
                     setattr(self, key, datetime.strptime(value, time_format))
                 else:
                     setattr(self, key, value)
-                    storage.new(self)
 
     def save(self):
         """

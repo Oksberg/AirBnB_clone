@@ -1,77 +1,74 @@
 #!/usr/bin/python3
 """
-Module for serializing and deserializing data
+Serializes instances to a JSON file and
+deserializes JSON file to instances.
 """
+
 import json
 import os
 from models.base_model import BaseModel
 from models.user import User
-from models.amenity import Amenity
 from models.place import Place
-from models.review import Review
 from models.state import State
 from models.city import City
+from models.amenity import Amenity
+from models.review import Review
+
+class_dict = {
+    "BaseModel": BaseModel,
+    "User": User,
+    "Place": Place,
+    "Amenity": Amenity,
+    "City": City,
+    "Review": Review,
+    "State": State
+}
+# Filestorage == type(self)
 
 
 class FileStorage:
-    """
-    FileStorage class for storing, serializing and deserializing data
+    """The file storage engine class, that is;
+    A class that serialize and deserialize instances to a JSON file
     """
     __file_path = "file.json"
-
     __objects = {}
 
-    def new(self, obj):
-        """
-         Sets an object in the __objects dictionary with a key of 
-         <obj class name>.id.
-        """
-        obj_cls_name = obj.__class__.__name__
-
-        key = "{}.{}".format(obj_cls_name, obj.id)
-
-        FileStorage.__objects[key] = obj
-
-
     def all(self):
-        """
-        Returns the __objects dictionary. 
-        It provides access to all the stored objects.
-        """
-        return  FileStorage.__objects
+        """Returns the dictionary of objects"""
+        return type(self).__objects
 
+    def new(self, obj):
+        """Sets new obj in __objects dictionary."""
+        if obj.id in type(self).__objects:
+            print("exists")
+            return
+        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        type(self).__objects[key] = obj
+        # OR
+        # type(self).__objects[obj.id] = obj
 
     def save(self):
-        """
-        Serializes the __objects dictionary into 
-        JSON format and saves it to the file specified by __file_path.
-        """
-        all_objs = FileStorage.__objects
-
-        obj_dict = {}
-
-        for obj in all_objs.keys():
-            obj_dict[obj] = all_objs[obj].to_dict()
-
-        with open(FileStorage.__file_path, "w", encoding="utf-8") as file:
-            json.dump(obj_dict, file)
+        """serializes __objects to the JSON file (path: __file_path)"""
+        new_dict = []
+        for obj in type(self).__objects.values():
+            new_dict.append(obj.to_dict())
+            # for key, obj in type(self).__objects.items():
+            #    new_dict[key] = obj.to_dict()
+        with open(type(self).__file_path, "w", encoding='utf-8') as file:
+            json.dump(new_dict, file)
+            # OR
+            # with open(type(self).__file_path, "w", encoding="utf-8") as file:
+            #   json.dump([obj.to_dict() for obj in self.all().values()], file)
 
     def reload(self):
-        """
-        This method deserializes the JSON file
-        """
-        if os.path.isfile(FileStorage.__file_path):
-            with open(FileStorage.__file_path, "r", encoding="utf-8") as file:
-                try:
-                    obj_dict = json.load(file)
-
-                    for key, value in obj_dict.items():
-                        class_name, obj_id = key.split('.')
-
-                        cls = eval(class_name)
-
-                        instance = cls(**value)
-
-                        FileStorage.__objects[key] = instance
-                except Exception:
-                    pass
+        """Deserializes the JSON file to __objects if it exists"""
+        if os.path.exists(type(self).__file_path) is True:
+            return
+            try:
+                with open(type(self).__file_path, "r") as file:
+                    new_obj = json.load(file)
+                    for key, val in new_obj.items():
+                        obj = self.class_dict[val['__class__']](**val)
+                        type(self).__objects[key] = obj
+            except Exception:
+                pass

@@ -3,11 +3,8 @@
 """An interactive shell?"""
 
 import cmd
-import re
-import models
 from models.base_model import BaseModel
 from models import storage
-import json
 from models.user import User
 from models.place import Place
 from models.state import State
@@ -15,22 +12,22 @@ from models.city import City
 from models.amenity import Amenity
 from models.review import Review
 
-class_home = {
-    "BaseModel": BaseModel,
-    "User": User,
-    "Place": Place,
-    "Amenity": Amenity,
-    "City": City,
-    "Review": Review,
-    "State": State
-}
-
 
 class HBNBCommand(cmd.Cmd):
-    prompt = '(hbnb)  '
+    """Command interpreter for the hbnb console."""
+
+    prompt = '(hbnb)'
+    __all_classes = {
+            "BaseModel": BaseModel,
+            "User": User,
+            "Place": Place,
+            "Amenity": Amenity,
+            "City": City,
+            "Review": Review,
+            "State": State}
 
     def do_EOF(self, line):
-        """Exits console"""
+        """EOF signal to exit console"""
         print("")
         return True
 
@@ -46,8 +43,6 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ overwriting the emptyline method """
         return False
-        # OR
-        # pass
 
     def do_create(self, line):
         """Creates a new instances of a class"""
@@ -68,7 +63,7 @@ class HBNBCommand(cmd.Cmd):
 
         if len(arr) < 1:
             print("** class name missing **")
-        elif arr[0] not in class_home:
+        elif arr[0] not in __all_classes:
             print("** class doesn't exist **")
         elif len(arr) < 2:
             print("** instance id missing **")
@@ -85,7 +80,7 @@ class HBNBCommand(cmd.Cmd):
         arr = line.split()
         if len(arr) < 1:
             print("** class name missing **")
-        elif arr[0] not in class_home:
+        elif arr[0] not in __all_classes:
             print("** class doesn't exist **")
         elif len(arr) < 2:
             print("** instance id missing **")
@@ -98,22 +93,6 @@ class HBNBCommand(cmd.Cmd):
             #    del (storage.all()[new_str])
                 storage.save()
 
-    # def do_all(self, line):
-    #    """ Print all instances in string representation """
-    #    new_list = []
-
-    #    if not line:
-    #        for key, obj in storage.all().items():
-    #            new_list.append(str(obj))
-    #        print(new_list)
-    #    elif line not in class_home:
-    #        print("** class doesn't exist **")
-    #    else:
-    #        for key, obj in storage.all().items():
-    #            if obj.__class__.__name__ == line:
-    #                new_list.append(str(obj))
-    #        print(new_list)
-
     def do_all(self, line):
         """ Print all instances in string representation """
         objects = []
@@ -121,7 +100,7 @@ class HBNBCommand(cmd.Cmd):
             print([str(value) for key, value in storage.all().items()])
         else:
             st = line.split(" ")
-            if st[0] not in class_home:
+            if st[0] not in __all_classes:
                 print("** class doesn't exist **")
             else:
                 for key, value in storage.all().items():
@@ -129,20 +108,6 @@ class HBNBCommand(cmd.Cmd):
                     if clas[0] == st[0]:
                         objects.append(str(value))
                 print(objects)
-
-    # def do_all(self, line):
-    #    """ Print all instances in string representation """
-    #    arr = line.split()
-    #    if len(arr) > 0 and arr[0] not in storage.class_dict():
-    #        print("** class doesn't exist **")
-    #    else:
-    #        new_list = []
-    #        for obj in storage.all().values():
-    #            if len(arr) > 0 and arr[0] == obj.__class__.__name__:
-    #                new_list.append(obj.__str__())
-    #            elif len(arr) == 0:
-    #                new_list.append(obj.__str__())
-    #        print(new_list)
 
     def do_update(self, line):
         """Update a class instance of a given id by adding or updating
@@ -155,7 +120,7 @@ class HBNBCommand(cmd.Cmd):
         if len(arr) < 1:
             print("** class name missing **")
             return
-        elif arr[0] not in class_home:
+        elif arr[0] not in __all_classes:
             print("** class doesn't exist **")
             return
         elif len(arr) < 2:
@@ -191,8 +156,12 @@ class HBNBCommand(cmd.Cmd):
         if line is None:
             return
 
-        cmdPattern = "^([A-Za-z]+)\.([a-z]+)\(([^(]*)\)"
-        paramsPattern = """^"([^"]+)"(?:,\s*(?:"([^"]+)"|(\{[^}]+\}))(?:,\s*(?:("?[^"]+"?)))?)?"""
+        cmdPattern = "^([A-Za-z]+).([a-z]+)(([^(]*))"
+        paramsPattern = (
+                r"""^"([^"]+)"(?:,\s*(?:"([^"]+)"|(\{[^}
+                ]+\}))(?:,\s*(?:"?([^"]+)"?))?)?"""
+                )
+
         m = re.match(cmdPattern, line)
         if not m:
             super().default(line)

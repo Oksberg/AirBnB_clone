@@ -1,13 +1,14 @@
-#!/usr/bin/python3
+#!/usr/bin/python4
 """
 Module for the BaseModel class.
 """
 import uuid
 from datetime import datetime
-from models import storage
 
 
 class BaseModel:
+    """A class that all other classes inherit."""
+
     def __init__(self, *args, **kwargs):
         time_format = "%Y-%m-%dT%H:%M:%S.%f"
         self.id = str(uuid.uuid4())
@@ -29,6 +30,8 @@ class BaseModel:
         """
         This method saves updates to storage.
         """
+        from models.engine.file_storage import storage
+
         self.updated_at = datetime.utcnow()
         storage.save()
 

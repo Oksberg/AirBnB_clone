@@ -1,75 +1,53 @@
 #!/usr/bin/python3
-"""
-Module for the BaseModel class.
-"""
-import uuid
+"""Module that defines BaseModel class and instances"""
+
 from datetime import datetime
-import models
+from models import storage
+from uuid import uuid4
 
 
 class BaseModel:
+    """Class that defines Base Model for Airbnb clone"""
+
     def __init__(self, *args, **kwargs):
-        time_format = "%Y-%m-%dT%H:%M:%S.%f"
-        self.id = str(uuid.uuid4())
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
-        
-        if kwargs:
-            for key, value in kwargs.items():
-                if key == "__class__":
-                    continue
-                elif key == "created_at" or key == "updated_at":
-                    setattr(self, key, datetime.strptime(value, time_format))
+        """Function to initialize instance public attributes"""
+
+        if kwargs is not None and kwargs != {}:
+            for i in kwargs:
+                if i == "created_at":
+                    self.__dict__["created_at"] = datetime.strptime(
+                            kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+
+                elif i == "updated_at":
+                    self.__dict__["updated_at"] = datetime.strptime(
+                            kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
+
                 else:
-                    setattr(self, key, value)
+                    self.__dict__[i] = kwargs[i]
 
-        models.storage.new(self)
-
-    def save(self):
-        """
-
-        """
-        self.updated_at = datetime.utcnow()
-        models.storage.save()
-
-    def to_dict(self):
-        """
-
-        """
-        inst_dict = self.__dict__.copy()
-        inst_dict["__class__"] = self.__class__.__name__
-        inst_dict["created_at"] = self.created_at.isoformat()
-        inst_dict["updated_at"] = self.updated_at.isoformat()
-
-        return inst_dict
+        else:
+            self.id = str(uuid4())
+            self.created_at = datetime.now()
+            self.updated_at = datetime.now()
+            storage.new(self)
 
     def __str__(self):
-        """
+        """Function that returns official string rep of instances"""
 
-        """
-        class_name = self.__class__.__name__
-        return "[{}] ({}) {}".format(class_name, self.id, self.__dict__)
+        return ("[{}] ({}) {}".format(type(self).__name__,
+                self.id, self.__dict__))
 
+    def save(self):
+        """Function to update public instance attributes with current date"""
 
-if __name__ == "__main__":
-    my_model = BaseModel()
-    my_model.name = "My_First_Model"
-    my_model.my_number = 89
-    print(my_model.id)
-    print(my_model)
-    print(type(my_model.created_at))
-    print("--")
-    my_model_json = my_model.to_dict()
-    print(my_model_json)
-    print("JSON of my_model:")
-    for key in my_model_json.keys():
-        print("\t{}: ({}) - {}".format(key, type(my_model_json[key]), my_model_json[key]))
+        self.updated_at = datetime.now()
+        storage.save()
 
-    print("--")
-    my_new_model = BaseModel(**my_model_json)
-    print(my_new_model.id)
-    print(my_new_model)
-    print(type(my_new_model.created_at))
+    def to_dict(self):
+        """Function that returns a dict with key/value pairs of instances"""
 
-    print("--")
-    print(my_model is my_new_model)
+        new_dict = self.__dict__.copy()
+        new_dict["__class__"] = type(self).__name__
+        new_dict["created_at"] = new_dict["created_at"].isoformat()
+        new_dict["updated_at"] = new_dict["updated_at"].isoformat()
+        return (new_dict)
